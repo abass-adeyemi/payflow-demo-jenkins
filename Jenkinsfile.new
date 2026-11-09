@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+
+    options {
+        skipDefaultCheckout(true)
+        timeout(time: 10, unit: 'MINUTES')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Build steps will go here.'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'test -f index.html'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh '''
+                    if [ ! -w /var/payflow-deploy ]; then
+                        echo "Jenkins cannot write to /var/payflow-deploy"
+                        exit 1
+                    fi
+
+                    cp index.html /var/payflow-deploy/index.html
+                '''
+
+                echo 'Deployment complete. View it at http://localhost:8081'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+
+        failure {
+            echo 'Pipeline failed. Review the stage logs above.'
+        }
+    }
+}
